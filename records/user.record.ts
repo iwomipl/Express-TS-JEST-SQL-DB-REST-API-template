@@ -1,5 +1,6 @@
-import {UserEntity} from "../types";
+import {ReturnedFromUser, UserEntity} from "../types";
 import {v4 as uuid} from 'uuid';
+import { pool } from "../utils/db";
 
 export class User implements UserEntity{
     public id?: string;
@@ -15,12 +16,37 @@ export class User implements UserEntity{
      this.lastLoggedIn = obj.lastLoggedIn || null;
      this.password = obj.password;
     }
+    async _validateNewUser(){
 
-    async insert(): Promise<void>{
+    }
+    async insert(): Promise<ReturnedFromUser>{
+        this.createdAt = new Date(new Date().toLocaleDateString());
+
+        try{
+        await pool.execute('INSERT INTO `users`(`id`, `email`, `createdAt`, `password`) VALUES(:id, :email, :createdAt, :password)', {
+            id: this.id,
+            email: this.email,
+            createdAt: this.createdAt,
+            password: this.password,
+        });
+        return {
+                "message": "User created",
+                "loginStatus": false,
+            } as ReturnedFromUser;
+        } catch {
+            return {
+                "message": "User could not be created",
+                "loginStatus": false,
+            } as ReturnedFromUser;
+        }
+    }
+
+    async deleteUser(): Promise<void>{
 
     }
 
-    async login(): Promise<boolean>{
+    static async login(email: string, password: string): Promise<boolean>{
+
         return
     }
 
@@ -41,9 +67,7 @@ export class User implements UserEntity{
 
     }
 
-    async delete(): Promise<void>{
 
-    }
 
 
 }

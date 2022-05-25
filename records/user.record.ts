@@ -66,8 +66,4 @@ export class User implements UserEntity{
     async deductFromBasket(): Promise<void>{
 
     }
-
-
-
-
 }

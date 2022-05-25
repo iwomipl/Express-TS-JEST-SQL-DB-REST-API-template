@@ -3,6 +3,8 @@ import {Router} from "express";
 export const homeRouter = Router();
 
 homeRouter
-    .get('/', (req, res)=>{
+    .post('/', (req, res)=>{
+        const {body} = req;
+        console.log(body);
         res.json({"message": "i'm Working with json"});
     })

@@ -1,10 +1,10 @@
 import {Router} from "express";
 import {User} from "../records/user.record";
 
-export const homeRouter = Router();
+export const userRouter = Router();
 
-homeRouter
-    .post('/', async (req, res) => {
+userRouter
+    .post('/register', async (req, res) => {
         const {email, password, confirmPassword} = req.body;
         if (password === confirmPassword) {
             const newUser = new User({email, password});
@@ -17,4 +17,12 @@ homeRouter
                 "loginStatus": false,
             });
         }
+    })
+    .post('/login', async (req, res) => {
+        const {email, password} = req.body;
+            res.json({
+                "message": `User ${email} logged in with password ${password}`,
+                "loginStatus": false,
+            });
+
     })

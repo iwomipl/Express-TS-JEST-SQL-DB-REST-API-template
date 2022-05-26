@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import 'express-async-errors';
 import './utils/db';
-import {homeRouter} from "./routers/homeRouter";
+import {userRouter} from "./routers/userRouter";
 import {handleError} from "./utils/errors";
 import {config} from "./config/config";
 
@@ -16,7 +16,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use('/', homeRouter);
+app.use('/user', userRouter);
 
 app.use(handleError);
 

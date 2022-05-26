@@ -7,6 +7,7 @@
     dbDatabase: '',
     serverHost: '',
     serverPort: '',
+    jwtSecret: 'secretToYourPassport',
     corsOrigin: '',
 };
  */

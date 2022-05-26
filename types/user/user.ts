@@ -13,3 +13,7 @@ export interface ReturnedFromUser {
     message: string;
     loginStatus: boolean;
 }
+
+export interface ReturnedFromValidation extends Omit<ReturnedFromUser, 'loginStatus'> {
+    validationStatus: boolean;
+}

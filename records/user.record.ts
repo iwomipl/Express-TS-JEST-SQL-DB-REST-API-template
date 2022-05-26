@@ -1,6 +1,10 @@
-import {ReturnedFromUser, UserEntity} from "../types";
+import { ReturnedFromUser, ReturnedFromValidation, UserEntity} from "../types";
 import {v4 as uuid} from 'uuid';
 import { pool } from "../utils/db";
+import {FieldPacket} from "mysql2";
+import { ValidationError } from "../utils/errors";
+
+export type UserRecordResults = [UserEntity[], FieldPacket[]]
 
 export class User implements UserEntity{
     public id?: string;
@@ -10,34 +14,64 @@ export class User implements UserEntity{
     public password: string;
 
     constructor(obj: UserEntity){
-     this.id = obj.id || uuid();
+        if (!obj.email || obj.email.length < 5 || !obj.email.includes('@')) {
+            throw new ValidationError('You must give a proper email address.');
+        }
+     this.id = obj.id;
      this.email = obj.email;
      this.createdAt = obj.createdAt || null;
      this.lastLoggedIn = obj.lastLoggedIn || null;
      this.password = obj.password;
     }
-    async _validateNewUser(){
+    async _validateBeforeInserting(): Promise<ReturnedFromValidation>{
+        if (this.id){
+            return {
+                "message": "Cannot insert something that is already inserted!",
+                "validationStatus": false,
+            };
+        }
+        if (await User.getOne(this.email)){
+            return {
+                "message": "Cannot insert something that is already there!",
+                "validationStatus": false,
+            };
+        }
 
+        return {
+            "message": "",
+            "validationStatus": true,
+        };
     }
+
     async insert(): Promise<ReturnedFromUser>{
-        this.createdAt = new Date(new Date().toLocaleDateString());
+        const validation = await this._validateBeforeInserting();
+        if (!validation.validationStatus){
+            return {
+                "message": validation.message,
+                "loginStatus": false,
+            };
+        }
+        if (!this.id){
+            this.id = uuid();
+        }
 
         try{
-        await pool.execute('INSERT INTO `users`(`id`, `email`, `createdAt`, `password`) VALUES(:id, :email, :createdAt, :password)', {
+            await pool.execute('INSERT INTO `users`(`id`, `email`, `createdAt`, `password`) VALUES(:id, :email, :createdAt, :password)', {
             id: this.id,
             email: this.email,
             createdAt: this.createdAt,
             password: this.password,
         });
+
         return {
                 "message": "User created",
                 "loginStatus": false,
-            } as ReturnedFromUser;
+            };
         } catch {
             return {
                 "message": "User could not be created",
                 "loginStatus": false,
-            } as ReturnedFromUser;
+            };
         }
     }
 
@@ -50,9 +84,12 @@ export class User implements UserEntity{
         return
     }
 
-    static async getOne(id: string): Promise<UserEntity>{
+    static async getOne(email: string): Promise<User | null> {
+        const [results]= await pool.execute("SELECT * FROM `users` WHERE `email` = :email", {
+            email,
+        }) as UserRecordResults;
 
-        return;
+        return results.length === 0 ? null : new User(results[0]);
     }
 
     async updateOne(): Promise<void>{

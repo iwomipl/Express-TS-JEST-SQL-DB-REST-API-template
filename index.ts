@@ -18,7 +18,7 @@ app.use(express.json());
 
 app.use('/', homeRouter);
 
-app.use(handleError)
+app.use(handleError);
 
 app.listen(3001, config.serverHost, () => {
     console.log(local);

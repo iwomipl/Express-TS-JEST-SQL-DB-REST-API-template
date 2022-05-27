@@ -8,7 +8,7 @@ userRouter
     .post('/register', async (req, res) => {
         const {email, confirmPassword} = req.body;
         if (req.body.password !== confirmPassword){
-            return res.json({
+            return res.status(400).json({
                 "message": "Input value Password does NOT match the Confirm Password Input value ",
                 "loginStatus": false,
             });
@@ -16,10 +16,10 @@ userRouter
             const password = await hashThePass(req.body.password);
             const newUser = new User({email, password});
             const response = await newUser.insert();
-
+            console.log(response)
             res.json(response);
         } else {
-            res.json({
+            res.status(401).json({
                 "message": "User could not be created, try again later or use different credentials",
                 "loginStatus": false,
             });
@@ -28,18 +28,20 @@ userRouter
     .post('/login', async (req, res) => {
             const {email} = req.body;
             if (req.body.password !== '' && typeof req.body.password === 'string' && req.body.password >4) {
-                const {password} = await User.getOne(email);
-                const result = await compareHashedPasswordToTheOneFromDb(req.body.password, password);
+                const existingUser = await User.getOne(email);
+                if (existingUser) {
+                    const result = await compareHashedPasswordToTheOneFromDb(req.body.password, existingUser.password);
 
-                if (result) {
-                    // await User.login(email, password);
-                    return res.json({
-                        "message": `User ${email} logged in.`,
-                        "loginStatus": true,
-                    });
+                    if (result) {
+                        // await User.login(email, password);
+                        return res.json({
+                            "message": `User ${email} logged in.`,
+                            "loginStatus": true,
+                        });
+                    }
                 }
             }
-        res.json({
+        res.status(401).json({
             "message": `Invalid credentials`,
             "loginStatus": false,
         });

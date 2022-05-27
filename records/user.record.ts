@@ -14,7 +14,7 @@ export class User implements UserEntity{
     public password: string;
 
     constructor(obj: UserEntity){
-        if (!obj.email || obj.email.length < 5 || !obj.email.includes('@')) {
+        if (!obj.email || obj.email.length < 4 || obj.email.length > 25 ) {
             throw new ValidationError('You must give a proper email address.');
         }
      this.id = obj.id;

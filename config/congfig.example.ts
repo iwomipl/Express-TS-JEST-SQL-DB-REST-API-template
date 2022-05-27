@@ -9,5 +9,6 @@
     serverPort: '',
     jwtSecret: 'secretToYourPassport',
     corsOrigin: '',
+    saltOrRounds: number,
 };
  */

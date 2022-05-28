@@ -8,17 +8,17 @@ export type UserRecordResults = [UserEntity[], FieldPacket[]]
 
 export class User implements UserEntity{
     public id?: string;
-    public email: string;
+    public login: string;
     public createdAt?: Date;
     public lastLoggedIn?: Date;
     public password: string;
 
     constructor(obj: UserEntity){
-        if (!obj.email || obj.email.length < 4 || obj.email.length > 25 ) {
-            throw new ValidationError('You must give a proper email address.');
+        if (!obj.login || obj.login.length < 4 || obj.login.length > 25 ) {
+            throw new ValidationError('You must give a proper login address.');
         }
      this.id = obj.id;
-     this.email = obj.email;
+     this.login = obj.login;
      this.createdAt = obj.createdAt || null;
      this.lastLoggedIn = obj.lastLoggedIn || null;
      this.password = obj.password;
@@ -30,7 +30,7 @@ export class User implements UserEntity{
                 "validationStatus": false,
             };
         }
-        if (await User.getOne(this.email)){
+        if (await User.getOne(this.login.toLowerCase())){
             return {
                 "message": "Cannot insert something that is already there!",
                 "validationStatus": false,
@@ -56,13 +56,13 @@ export class User implements UserEntity{
         }
 
         try{
-            await pool.execute('INSERT INTO `users`(`id`, `email`, `createdAt`, `password`) VALUES(:id, :email, :createdAt, :password)', {
+            await pool.execute('INSERT INTO `users`(`id`, `login`, `createdAt`, `password`) VALUES(:id, :login, :createdAt, :password)', {
             id: this.id,
-            email: this.email,
+            login: this.login.toLowerCase(),
             createdAt: this.createdAt,
             password: this.password,
         });
-
+            //@TODO think of creating another table or columns to manage roles, nut firts let's finish app
         return {
                 "message": "User created",
                 "loginStatus": false,
@@ -79,14 +79,14 @@ export class User implements UserEntity{
 
     }
 
-    static async login(email: string, password: string): Promise<boolean>{
+    static async login(login: string, password: string): Promise<boolean>{
 
         return
     }
 
-    static async getOne(email: string): Promise<User | null> {
-        const [results]= await pool.execute("SELECT * FROM `users` WHERE `email` = :email", {
-            email,
+    static async getOne(login: string): Promise<User | null> {
+        const [results]= await pool.execute("SELECT * FROM `users` WHERE `login` = :login", {
+            login,
         }) as UserRecordResults;
 
         return results.length === 0 ? null : new User(results[0]);

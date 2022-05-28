@@ -6,20 +6,20 @@ export const userRouter = Router();
 
 userRouter
     .post('/register', async (req, res) => {
-        const {email, confirmPassword, passFromFront = req.body.password}: {email: string, passFromFront: string, confirmPassword: string} = req.body;
+        const {login, confirmPassword, passFromFront = req.body.password}: {login: string, passFromFront: string, confirmPassword: string} = req.body;
         if (passFromFront !== confirmPassword){
             return res.status(400).json({
                 "message": "Password input value  does NOT match the Confirm Password input value ",
                 "loginStatus": false,
             });
-        } else if(!email.match(/^[\w-_.@]{5,25}$/i)){
+        } else if(!login.match(/^[\w-_.@]{5,25}$/i)){
             return res.status(400).json({
-                "message": "Your Login or email should be only letters '-', '_' , '.', and '@' ",
+                "message": "Your Login should be only letters '-', '_' , '.', and '@' ",
                 "loginStatus": false,
             });
         } else if (passFromFront !== '' && passFromFront.length >4 && passFromFront.length <25) {
             const password = await hashThePass(passFromFront);
-            const newUser = new User({email, password});
+            const newUser = new User({login, password});
             const response = await newUser.insert();
 
             res.json(response);
@@ -31,16 +31,16 @@ userRouter
         }
     })
     .post('/login', async (req, res) => {
-            const {email, password}: {email:string, password: string} = req.body;
+            const {login, password}: {login:string, password: string} = req.body;
             if (password !== '' && typeof password === 'string' && password.length >4) {
-                const existingUser = await User.getOne(email);
+                const existingUser = await User.getOne(login);
                 if (existingUser) {
                     const result = await compareHashedPasswordToTheOneFromDb(password, existingUser.password);
 
                     if (result) {
-                        // await User.login(email, password);
+                        // await User.login(login, password);
                         return res.json({
-                            "message": `User ${email} logged in.`,
+                            "message": `User ${login} logged in.`,
                             "loginStatus": true,
                         });
                     }

@@ -38,11 +38,7 @@ userRouter
                     const result = await compareHashedPasswordToTheOneFromDb(password, existingUser.password);
 
                     if (result) {
-                        // await User.login(login, password);
-                        return res.json({
-                            "message": `User ${login} logged in.`,
-                            "loginStatus": true,
-                        });
+                        return res.json(await User.login(login));
                     }
                 }
             }

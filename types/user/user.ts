@@ -12,6 +12,7 @@ export type CreateUserReq =  Omit<UserEntity, 'id' | 'createdAt' | 'lastLoggedIn
 export interface ReturnedFromUser {
     message: string;
     loginStatus: boolean;
+    token?: string | null;
 }
 
 export interface ReturnedFromValidation extends Omit<ReturnedFromUser, 'loginStatus'> {

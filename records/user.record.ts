@@ -2,7 +2,9 @@ import { ReturnedFromUser, ReturnedFromValidation, UserEntity} from "../types";
 import {v4 as uuid} from 'uuid';
 import { pool } from "../utils/db";
 import {FieldPacket} from "mysql2";
+import * as jwt from 'jsonwebtoken';
 import { ValidationError } from "../utils/errors";
+import {config} from "../config/config";
 
 export type UserRecordResults = [UserEntity[], FieldPacket[]]
 
@@ -66,12 +68,12 @@ export class User implements UserEntity{
         return {
                 "message": "User created",
                 "loginStatus": false,
-            };
+            } as ReturnedFromUser;
         } catch {
             return {
                 "message": "User could not be created",
                 "loginStatus": false,
-            };
+            } as ReturnedFromUser;
         }
     }
 
@@ -79,9 +81,28 @@ export class User implements UserEntity{
 
     }
 
-    static async login(login: string, password: string): Promise<boolean>{
+    static async login(login: string): Promise<ReturnedFromUser>{
+        try {
+            const myUser = new User(await User.getOne(login));
+            myUser.lastLoggedIn = new Date(new Date().toLocaleString('en-US', {timeZone: 'Europe/Warsaw'}));
+            const token = jwt.sign({
+                login: myUser.login,
+                lastLoggedIn: myUser.lastLoggedIn,
+            }, config.jwtSecret, {expiresIn: '15m'});
+            await myUser.updateOne('lastLoggedIn');
 
-        return
+            return {
+                "message": `User ${login} logged in.`,
+                "loginStatus": true,
+                "token": token,
+            } as ReturnedFromUser;
+        } catch (err){
+            console.log(err);
+            return {
+                "message": `User not logged in. Try again later`,
+                "loginStatus": false,
+            } as ReturnedFromUser;
+        }
     }
 
     static async getOne(login: string): Promise<User | null> {
@@ -92,8 +113,13 @@ export class User implements UserEntity{
         return results.length === 0 ? null : new User(results[0]);
     }
 
-    async updateOne(): Promise<void>{
-
+    async updateOne(whatChanged: string): Promise<void>{
+        const stringOfRequestToDb = 'UPDATE `users` SET `'+whatChanged+'` = :'+whatChanged+' WHERE `id` = :id';
+        const objToChangeRequestToDb = {
+            id: this.id,
+            [whatChanged]: this[whatChanged as keyof User],
+        }
+        await pool.execute(stringOfRequestToDb, objToChangeRequestToDb)
     }
 
     async addToBasket(): Promise<void>{

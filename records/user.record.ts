@@ -94,7 +94,7 @@ export class User implements UserEntity{
             return {
                 "message": `User ${login} logged in.`,
                 "loginStatus": true,
-                "token": token,
+                "token": 'Bearer '+token,
             } as ReturnedFromUser;
         } catch (err){
             console.log(err);

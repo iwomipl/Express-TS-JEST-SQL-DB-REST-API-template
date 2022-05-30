@@ -20,7 +20,6 @@ app.use(cors({
     origin: config.corsOrigin,
 }));
 configurePassport(app);
-// app.use(passport.initialize());
 app.use(express.json());
 
 /*------- ROUTERS ----------*/

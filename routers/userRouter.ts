@@ -1,8 +1,8 @@
 import {Router} from 'express';
 import {User} from '../records/user.record';
 import {hashThePass} from '../utils/password';
-import passport from 'passport';
 import {UserEntity} from "../types";
+import {checkAuthentication} from "../middlewares/passport-strategies.mw";
 
 export const userRouter = Router();
 
@@ -36,7 +36,7 @@ userRouter
             });
         }
     })
-    .post('/login', passport.authenticate('local', {session: false}), async (req, res) => {
+    .post('/login', checkAuthentication, async (req, res) => {
         if (req.user) {
             return res.json(await User.login((req.user as UserEntity).login));
         } else {
@@ -45,5 +45,5 @@ userRouter
                 "loginStatus": false,
             })
         }
-    });
+    })
 

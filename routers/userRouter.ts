@@ -2,7 +2,7 @@ import {Router} from 'express';
 import {User} from '../records/user.record';
 import {hashThePass} from '../utils/password';
 import {UserEntity} from "../types";
-import {checkAuthentication} from "../middlewares/passport-strategies.mw";
+import {checkIfAuthenticated, checkIfLogin} from "../middlewares/passport-strategies.mw";
 
 export const userRouter = Router();
 
@@ -23,12 +23,12 @@ userRouter
                 "message": "Your Login should be only letters '-', '_' , '.', and '@' ",
                 "loginStatus": false,
             });
-        } else if (passFromFront !== '' && passFromFront.length > 4 && passFromFront.length < 25) {
+        } else if (typeof passFromFront === 'string' && passFromFront.length > 4 && passFromFront.length < 25) {
             const password = await hashThePass(passFromFront);
             const newUser = new User({login, password});
             const response = await newUser.insert();
 
-            res.json(response);
+            return res.json(response);
         } else {
             res.status(401).json({
                 "message": "User could not be created, try again later or use different credentials",
@@ -36,10 +36,23 @@ userRouter
             });
         }
     })
-    .post('/login', checkAuthentication, async (req, res) => {
+    .post('/login', checkIfLogin, async (req, res) => {
         if (req.user) {
             return res.json(await User.login((req.user as UserEntity).login));
         } else {
+            res.status(401).json({
+                "message": `Invalid credentials`,
+                "loginStatus": false,
+            })
+        }
+    })
+    .get('/', checkIfAuthenticated, async (req, res) => {
+        if (req.user){
+            res.json({
+                "message": `We're cool`,
+                "loginStatus": true,
+            });
+        }else {
             res.status(401).json({
                 "message": `Invalid credentials`,
                 "loginStatus": false,

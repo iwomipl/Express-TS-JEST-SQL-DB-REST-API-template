@@ -77,8 +77,12 @@ export class User implements UserEntity{
         }
     }
 
-    async deleteUser(): Promise<void>{
+    static async deleteUser(login: string): Promise<User | null>{
 
+        await pool.execute("DELETE FROM `users` WHERE `login` = :login", {
+            login,
+        })
+        return await User.getOne(login);
     }
 
     static async login(login: string): Promise<ReturnedFromUser>{

@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import {User} from '../records/user.record';
-import {hashThePass} from '../utils/password';
+import {compareHashedPasswordToTheOneFromDb, hashThePass} from '../utils/password';
 import {UserEntity} from "../types";
 import {checkIfAuthenticated, checkIfLogin} from "../middlewares/passport-strategies.mw";
 
@@ -15,12 +15,12 @@ userRouter
         }: { login: string, passFromFront: string, confirmPassword: string } = req.body;
         if (passFromFront !== confirmPassword) {
             return res.status(400).json({
-                "message": "Password input value  does NOT match the Confirm Password input value ",
+                "message": "User could not be created, Password input value  does NOT match the Confirm Password input value ",
                 "loginStatus": false,
             });
         } else if (!login.match(/^[\w-_.@]{5,25}$/i)) {
             return res.status(400).json({
-                "message": "Your Login should be only letters '-', '_' , '.', and '@' ",
+                "message": "User could not be created, Your Login should be only letters '-', '_' , '.', and '@' ",
                 "loginStatus": false,
             });
         } else if (typeof passFromFront === 'string' && passFromFront.length > 4 && passFromFront.length < 25) {
@@ -47,16 +47,44 @@ userRouter
         }
     })
     .get('/', checkIfAuthenticated, async (req, res) => {
-        if (req.user){
+        if (req.user) {
             res.json({
                 "message": `We're cool`,
                 "loginStatus": true,
             });
-        }else {
+        } else {
             res.status(401).json({
                 "message": `Invalid credentials`,
                 "loginStatus": false,
             })
         }
+    })
+    .delete('/', checkIfAuthenticated, async (req, res) => {
+        const {password} = req.body;
+        const user: any = req.user;
+        const userToDelete = await User.getOne(user.login);
+        if (userToDelete) {
+            if (await compareHashedPasswordToTheOneFromDb(password, userToDelete.password)) {
+                const response = await User.deleteUser(userToDelete.login) ?
+                    {
+                        "message": `User NOT Deleted`,
+                        "loginStatus": true,
+                    } :
+                    {
+                        "message": `User Deleted`,
+                        "loginStatus": false,
+                    }
+                return res.json(response);
+            }
+            return res.json({
+                "message": `User NOT Deleted: wrong password`,
+                "loginStatus": false,
+            });
+        }
+        return res.json({
+            "message": `User NOT Deleted: User doesn't exist`,
+            "loginStatus": false,
+        });
+
     })
 
